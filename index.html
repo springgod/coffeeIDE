@@ -1,0 +1,713 @@
+<html>
+<head>
+	<link rel="stylesheet" href="pure-min.css">
+	<style>
+		textarea, pre { -moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4; }
+		/* Sample */
+		.textcomplete-wrapper{
+			width: 100%;
+			height: 100%;
+		}
+		.dropdown-menu {
+			border: 1px solid #ddd;
+			background-color: white;
+			letter-spacing: 0;
+		}
+
+		.dropdown-menu li {
+			border-top: 1px solid #ddd;
+			padding: 2px 5px;
+		}
+
+		.dropdown-menu li:first-child {
+			border-top: none;
+		}
+
+		.dropdown-menu li:hover,
+		.dropdown-menu .active {
+			background-color: rgb(110, 183, 219);
+		}
+
+
+		/* SHOULD not modify */
+
+		.dropdown-menu {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+
+		.dropdown-menu a:hover {
+			cursor: pointer;
+		}
+		.program-container {
+			width: calc( 100% - 3px );
+			height: calc( 100% - 3px );
+			position: relative;
+			background-color: black;
+			overflow: hidden;
+		}
+		#repl_source{
+			width: calc( 100% - 30px );
+			height: 100%;			
+			-moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4;
+			background-color: black;
+			padding: 3px 0 0 2px;
+			margin-left: 31px;
+			white-space: pre;
+			overflow: auto;
+			font-family: courier;
+			letter-spacing: normal;
+			white-space: pre;
+			word-wrap: normal;
+			color: white;
+			padding-left: 36px;
+			font-family: courier;
+		}
+		.line-number{
+			padding: 5px 0 0 2px;
+			position: absolute;
+			background-color: black;			
+			width: 30px;
+			margin-right: 5px;
+			display: inline-block;
+			text-align: right;
+			color: #666;
+			white-space: pre;
+			font-family: courier;
+			word-wrap: normal;
+			letter-spacing: normal;
+		}
+		.keyword-list {
+			position: absolute;
+			white-space: pre;
+			font-family: courier;
+			display: block;
+			word-wrap: normal;
+			letter-spacing: normal;
+			z-index: 1;			
+			background-color: #666;
+			padding: 0px 5px;
+			font-weight: bold;
+			color: #eee;
+		}
+		.keyword-list.hide{
+			display: none;
+		}
+		.keyword-list > .active{
+			background-color: #999;
+			color: #fff;
+		}
+		#output, #JS{
+			width: 100%;
+			height: calc(100% - 61px);
+			color: white;
+			background-color: black;
+		}
+		.pure-button-success {
+            background: rgb(28, 184, 65); /* this is a green */
+        }
+
+        .pure-button-error {
+            background: rgb(202, 60, 60); /* this is a maroon */
+        }
+
+        .pure-button-warning {
+            background: rgb(223, 117, 20); /* this is an orange */
+        }
+
+        .pure-button-secondary {
+            background: rgb(66, 184, 221); /* this is a light blue */
+        }
+		#save.active{
+			 /*Transition*/
+			-webkit-transition: -webkit-box-shadow 0.2s ease-out;
+			-moz-transition: -moz-box-shadow 0.2s ease-out;
+			-o-transition: box-shadow 0.2s ease-out;
+			 -moz-box-shadow: 0px 0px 25px rgb(28, 184, 65);
+			-webkit-box-shadow: 0px 0px 25px rgb(28, 184, 65);
+			box-shadow: 0px 0px 25px rgb(28, 184, 65);
+		}
+		#save.active.out{
+			-webkit-transition: -webkit-box-shadow 0.45s ease-out;;
+			-moz-transition: -moz-box-shadow 0.45s ease-out;
+			-o-transition: box-shadow 0.45s ease-out;
+			 -moz-box-shadow: 0px 0px 0px transparent;
+			-webkit-box-shadow: 0px 0px 0px transparent;
+			box-shadow: 0px 0px 0px transparent;
+		}
+		#drop_zone {
+			border: 2px dashed #bbb;
+			-moz-border-radius: 5px;
+			-webkit-border-radius: 5px;
+			border-radius: 5px;
+			padding: 5px 35px;
+			text-align: center;
+			color: #bbb;
+			border-radius: 10px;
+			margin-left: 50px;
+		}
+		#drop_zone.active {
+			border: 2px dashed #999;
+			color: #999;
+			background-color: #eee;
+		}
+		.tab-head-button {
+			padding: 3px 20px;
+		}
+		.tab-body.hide{
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div id="error"></div>
+	<div class="pure-g">
+		<div class="pure-u-1-2">
+			<a href="#" id="compile" class="pure-button">Compile</a>
+			<a href="#" id="clean" class="pure-button">Clean</a>
+			<a href="#" id="run" class="pure-button pure-button-primary">Run</a>
+			<a href="#" id="load" class="pure-button pure-button-secondary">
+				<select id="programs"></select>
+				Load
+			</a>
+			<a href="#" id="save" class="pure-button pure-button-success">
+				<input id="program-name" type="text"></input>
+				Save
+			</a>
+		</div>
+	</div>
+	<div class="pure-g" style="height:calc( 100% - 60px )">
+		<div class="pure-u-2-3">
+			Program:
+			<div class="program-container">
+				<div class="line-number"></div>
+				<textarea id="repl_source" wrap="off" class='highlightee'></textarea>
+				<div class="keyword-list hide"></div>
+			</div>
+		</div>
+		
+		<div class="pure-u-1-3">
+			<div>
+			Input:
+				<div id="drop_zone">Drop files here. Loaded data will be placed in loadedInput</div>
+			</div>
+			<div class="tab-head" tab-body=".tab-body">
+				<div class="pure-button pure-button-primary tab-head-button" tab-value="output">Output</div>
+				<div class="pure-button tab-head-button" tab-value="js">JS</div>
+			</div>
+			<div class="tab-body">
+				<textarea id="output" class="tab-body" tab-value="output"></textarea>
+				<textarea id="js" class="tab-body hide" tab-value="js"></textarea>
+			</div>
+		</div>
+	</div>
+</body>
+ 
+
+<script type="text/coffeescript">
+	$('.tab-head').each ->
+		$head = $ @
+		$body = $ $head.attr('tab-body')
+		$head.find('.tab-head-button').click ->
+			$head.find('.pure-button-primary.tab-head-button').removeClass 'pure-button-primary'
+			$(@).addClass 'pure-button-primary'
+			$body.find('.tab-body').addClass 'hide'
+			$body.find(""".tab-body[tab-value="#{$(@).attr('tab-value')}"]""").removeClass 'hide'
+			console.log """.tab-body[tab-value="#{$(@).attr('tab-value')}"]"""
+	# To prevent triggering save and load when select project or input a project name
+	$('#programs').click (e)-> 
+		e.stopPropagation()
+		e.preventDefault()
+	# To prevent triggering save and load when select project or input a project name
+	$('#program-name').click (e)-> 
+		e.stopPropagation()
+		e.preventDefault()
+	# Sync project name to be save when select project to load
+	NEW_PROJECT = '( New )'
+	$('#programs').change ->
+		if $('#programs').val() is NEW_PROJECT
+			$('#program-name').val ''
+		else
+			$('#program-name').val $('#programs').val()
+	listPrograms = ->
+		$('#programs').empty()
+		for item in $.localStorage.keys()
+			if item.substr(0,2) is 'p_'
+				$opt = $("""<option></option>""")
+				$opt.text(item.substr(2,item.length))
+				$('#programs').append $opt
+		$('#programs').append """<option>#{NEW_PROJECT}</option>"""
+		
+	$('#save').click ->
+		if $('#program-name').val() is ''
+			alert "Please input a project name."
+			return
+		$.localStorage.set( "p_" + $('#program-name').val(), $('#repl_source').val())
+		listPrograms()
+		$el = $(@)
+		$el.addClass 'active'
+		seq = _.uniqueId()
+		$el.attr('seq', seq)
+		setTimeout (->
+			if $el.attr('seq') is seq 
+				$el.addClass 'out'
+		), 200
+		setTimeout (->
+			if $el.attr('seq') is seq
+				$el.removeClass 'out'
+				$el.removeClass 'active'
+		), 650
+		
+	window.editHistory =
+		doc: []
+		hisotry: []
+		at: 0
+ 	
+	$('#load').click ->
+		$('#repl_source').val($.localStorage.get( "p_" + $('#programs').val()))
+		$('#repl_source').change()
+		editHistory =
+			doc: $.localStorage.get( "p_" + $('#programs').val()).split('\n')
+			hisotry: []
+			at: 0
+		
+	listPrograms()
+	$('#programs').val NEW_PROJECT
+	$('#programs').change()
+	
+	
+	
+	
+	window.output = (x)-> 
+		if _.isObject x
+			x = JSON.stringify(x)
+		else if _.isArray x
+			x = JSON.stringify(x)
+		$("#output").val($("#output").val() + x + "\n")
+		$("#output")[0].scrollTop = $("#output")[0].scrollHeight;
+	# Set up the compilation function, to run when you stop typing.
+	compileSource = ->
+		source = $('#repl_source').val()
+		window.compiledJS = ''
+		try
+			window.compiledJS = CoffeeScript.compile source, bare: on
+			$("#js").val window.compiledJS
+			$('#error').hide()
+		catch {location, message}
+			if location?
+			  message = "Error on line #{location.first_line + 1}: #{message}"
+			$('#error').text(message).show()
+
+	$("#compile").click compileSource
+	
+	# Eval the compiled js.
+	evalJS = ->
+		try
+			compileSource()
+			eval window.compiledJS
+		catch error then alert error
+	addIndent = (e)->
+		$text = $('#repl_source')
+		selection = $text.selectRange()
+		$text.selectLines()
+		if selection[0] is 0
+			beginAtLineStart = yes
+		else
+			beginAtLineStart = $text.val().charAt(selection[0]-1) is '\n'
+		if selection[0] is selection[1]
+			beginAtLineStart = no
+		lines = $('#repl_source').selectedText().split('\n')
+		for i in [0..lines.length-1]
+			if e.shiftKey
+				if lines[i].charAt(0) is '\t'
+					lines[i] = lines[i].substr(1)
+					if (not beginAtLineStart) and i is 0
+						selection[0] -= 1
+					selection[1] -= 1
+					
+			else
+				lines[i] = '\t' + lines[i]
+				if (not beginAtLineStart) and i is 0
+					selection[0] += 1
+				selection[1] += 1
+		$text.insertAtCaret lines.join('\n')
+		
+		$text.selectRange(selection[0], selection[1])
+		e.preventDefault()
+	#add line break, scroll, and add indent based on current line
+	addLineBreak = (e)->
+		$('#repl_source').scrollLeft(0)
+		if $('#repl_source').caretPosition() is $('#repl_source').val().length
+			rollToEnd = yes
+		else
+			rollToEnd = no
+		prevLine = $('#repl_source').currentLine()
+		$('#repl_source').insertAtCaret "\n"
+		i=0
+		toInsert = ''
+		(
+			toInsert+='\t'
+			i+=1
+		) while prevLine.charAt(i) is '\t'
+		$('#repl_source').insertAtCaret toInsert
+		if rollToEnd
+			$('#repl_source').scrollTop($('#repl_source')[0].scrollHeight)
+		e.preventDefault()
+		$('#repl_source').change()
+		
+	$("#run").click ->		
+		evalJS()
+	$("#clean").click ->
+		$("#output").val('')
+	
+	pushHistory = ->
+		now = $('#repl_source').val().split('\n')
+		doc = editHistory.doc		
+		
+		head = 0
+		while head < now.length and head < doc.length and now[head] is doc[head]
+			head += 1
+		if head is now.length is doc.length
+			return
+		tail = 0
+		while tail + head < now.length and tail + head < doc.length and now[now.length - 1 - tail] is doc[doc.length - 1 - tail]
+			tail += 1
+		
+		editHistory.doc = now
+		editHistory.hisotry.splice(editHistory.at, editHistory.hisotry.length)
+		editHistory.hisotry.push
+			head: head
+			tail: tail
+			middleFrom: doc.splice(head, doc.length - head - tail)
+			middleTo: now.slice().splice(head, now.length - head - tail)
+		
+		if editHistory.hisotry.length > 2048
+			editHistory.hisotry.splice(0,1)			
+		editHistory.at = editHistory.hisotry.length
+			
+	undoHistory = ->
+		if editHistory.at is 0
+			return
+		editHistory.at -= 1
+		doc = editHistory.doc
+		at = editHistory.hisotry[editHistory.at]
+		args = [at.head, doc.length - at.head - at.tail].concat at.middleFrom
+		Array.prototype.splice.apply(doc, args)
+		$('#repl_source').val(doc.join('\n'))
+	redoHistory = ->
+		if editHistory.at is editHistory.hisotry.length 
+			return
+		doc = editHistory.doc
+		at = editHistory.hisotry[editHistory.at]
+		args = [at.head, doc.length - at.head - at.tail].concat at.middleTo
+		Array.prototype.splice.apply(doc, args)
+		editHistory.at += 1
+		
+		$('#repl_source').val(doc.join('\n'))
+		
+		
+		
+		
+		
+	# Dismiss console if Escape pressed or click falls outside console
+	# Trigger Run button on Ctrl-Enter
+	$(document.body).keydown (e) ->
+		#auto complete is working
+		if not $('.keyword-list').hasClass 'hide'
+			if e.which is 38
+				$at = $('.keyword-list').find('.active')
+				if $at.prev().length > 0
+					$at.removeClass 'active'
+					$at.prev().addClass 'active'
+				e.preventDefault()
+				return
+			else if e.which is 40
+				$at = $('.keyword-list').find('.active')
+				if $at.next().length > 0
+					$at.removeClass 'active'
+					$at.next().addClass 'active'
+				e.preventDefault()
+				return
+			else if e.which is 13
+				$at = $('.keyword-list').find('.active')
+				completeIt $at.text()
+				$('.keyword-list').addClass('hide')
+				e.preventDefault()
+				pushHistory()
+				return
+		
+		$('.keyword-list').addClass('hide')
+		if e.which is 13 and (e.metaKey or e.ctrlKey)
+			autocomplete()
+			pushHistory()
+		else if e.which is 83 and (e.metaKey or e.ctrlKey)
+			$('#save').click()
+			e.preventDefault()
+		else if $('#repl_source').is ":focus"
+			if e.which is 13
+				if not $('#repl_source').selectedText()
+					addLineBreak(e)
+				else
+					e.preventDefault()
+				_.delay pushHistory
+			else if e.which is 9
+				addIndent(e)
+				_.delay pushHistory
+			else if e.which is 89 and (e.metaKey or e.ctrlKey)#y
+				redoHistory()
+				e.preventDefault()
+			else if e.which is 90 and (e.metaKey or e.ctrlKey)#z
+				undoHistory()
+				e.preventDefault()
+			else
+				_.delay pushHistory
+				
+	$('#repl_source').scroll ->
+		$('.line-number').css top: "-#{$('#repl_source').scrollTop()}px"
+	$('#repl_source').change ->
+		last = +$('.line-number').attr('value') or 0
+		curr = $('#repl_source').val().split('\n').length
+		if last isnt curr
+			$('.line-number').text _.range(1, curr+1).join('\n')
+		$('.line-number').attr('value', curr)
+		
+	# auto complete
+	underscoreDict = _.keys(_)
+	bucketsDict = _.keys(buckets)
+	
+	
+	completeIt = (picked)->
+		pos = $('#repl_source').caretPosition()
+		fullText = $('#repl_source').val()
+		current = fullText.substr(0, pos).match(/[a-zA-Z0-9_]*$/)
+		$('#repl_source').insertAtCaret(picked.substring(current[0].length, picked.length))
+		
+	autocomplete = ->		
+		pos = $('#repl_source').caretPosition()
+		fullText = $('#repl_source').val()
+		current = fullText.substr(0, pos).match(/[a-zA-Z0-9_]*$/)
+		if current
+			current = current[0]
+		if not current
+			return
+		keywords = fullText.match /[a-zA-Z0-9_]*/g
+		keywords = _.union(_.unique(keywords), underscoreDict, bucketsDict)
+		len = current.length
+		keywords = _.filter keywords, (x)-> x isnt current and x.substr(0, len) is current
+		if keywords.length is 0
+			return	
+		keywords.sort()
+		first = keywords[0]
+		last = keywords[keywords.length-1]
+		picked = first
+		for i in [0..first.length-1]
+			if first.charAt(i) isnt last.charAt(i)
+				picked = first.substring(0, i)
+				break
+		$('#repl_source').insertAtCaret(picked.substring(current.length, picked.length))
+		if keywords.length > 1
+			$('.keyword-list').html "<div>#{keywords.join('</div><div>')}</div>"
+			$('.keyword-list').css window.getCaretScreenPosition($('#repl_source'))		
+			$('.keyword-list').removeClass('hide')
+			$('.keyword-list').find(':first-child').addClass 'active'
+	
+ </script>
+<script src="jquery-1.9.1.min.js"></script>
+<script src="jquery.storageapi.js"></script>
+<script src="jquery.textcomplete.js"></script>
+<script src="coffee-script.js"></script>
+<script src="underscore.js"></script>
+<script src="buckets.js"></script>
+<script src="maxflow.js"></script>
+<script type="text/javascript">
+$.fn.insertAtCaret = function(text) {
+    return this.each(function() {
+        if (document.selection && this.tagName == 'TEXTAREA') {
+            //IE textarea support
+            this.focus();
+            sel = document.selection.createRange();
+            sel.text = text;
+            this.focus();
+        } else if (this.selectionStart || this.selectionStart == '0') {
+            //MOZILLA/NETSCAPE support
+            startPos = this.selectionStart;
+            endPos = this.selectionEnd;
+            scrollTop = this.scrollTop;
+            this.value = this.value.substring(0, startPos) + text + this.value.substring(endPos, this.value.length);
+            this.focus();
+            this.selectionStart = startPos + text.length;
+            this.selectionEnd = startPos + text.length;
+            this.scrollTop = scrollTop;
+        } else {
+            // IE input[type=text] and other browsers
+            this.value += text;
+            this.focus();
+            this.value = this.value;    // forces cursor to end
+        }
+    });
+};
+$.fn.caretPosition = function(){
+  var el = this[0];
+  if (el.selectionStart) { 
+    return el.selectionStart; 
+  } else if (document.selection) { 
+    el.focus(); 
+
+    var r = document.selection.createRange(); 
+    if (r == null) { 
+      return 0; 
+    } 
+
+    var re = el.createTextRange(), 
+        rc = re.duplicate(); 
+    re.moveToBookmark(r.getBookmark()); 
+    rc.setEndPoint('EndToStart', re); 
+
+    return rc.text.length; 
+  }  
+  return 0; 
+
+}
+$.fn.selectedText = function(){
+  var textComponent = this[0];
+  var selectedText;
+  // IE version
+  if (document.selection != undefined)
+  {
+    textComponent.focus();
+    var sel = document.selection.createRange();
+    selectedText = sel.text;
+  }
+  // Mozilla version
+  else if (textComponent.selectionStart != undefined)
+  {
+    var startPos = textComponent.selectionStart;
+    var endPos = textComponent.selectionEnd;
+    selectedText = textComponent.value.substring(startPos, endPos)
+  }
+  return selectedText;
+ }
+$.fn.selectLines = function(){
+	var taval = this.val();
+	var start = taval.lastIndexOf('\n', this[0].selectionStart - 1) + 1;
+	var end = taval.indexOf('\n', this[0].selectionEnd);
+	if (end == -1) {
+		end = taval.length;
+	}
+	this[0].selectionStart = start;
+	this[0].selectionEnd = end;
+	return taval.substr(start, end - start);
+}
+$.fn.selectRange = function(){
+	if (arguments.length === 0){
+		return [this[0].selectionStart, this[0].selectionEnd]
+	}else if (arguments.length === 2){
+		this[0].selectionStart = +arguments[0];
+		this[0].selectionEnd = +arguments[1];
+	}
+}
+$.fn.currentLine = function(){
+  var $ta = $(this);
+  var pos = this[0].selectionStart; // fieldselection jQuery plugin
+  var taval = $ta.val();
+  var start = taval.lastIndexOf('\n', pos - 1) + 1;
+  var end = taval.indexOf('\n', pos);
+  if (end == -1) {
+      end = taval.length;
+  }
+  return taval.substr(start, end - start);
+}
+
+ var getStyles = (function () {
+    var color;
+    color = $('<div></div>').css(['color']).color;
+    if (typeof color !== 'undefined') {
+      return function ($el, properties) {
+        return $el.css(properties);
+      };
+    } else {  // for jQuery 1.8 or below
+      return function ($el, properties) {
+        var styles;
+        styles = {};
+        $.each(properties, function (i, property) {
+          styles[property] = $el.css(property);
+        });
+        return styles
+      };
+    }
+  })();
+window.getCaretScreenPosition = function ($this) {
+	// Browser native API does not provide the way to know the position of
+	// caret in pixels, so that here we use a kind of hack to accomplish
+	// the aim. First of all it puts a div element and completely copies
+	// the textarea's style to the element, then it inserts the text and a
+	// span element into the textarea.
+	// Consequently, the span element's position is the thing what we want.
+
+	if ($this[0].selectionEnd === 0) return;
+	var properties, css, $div, $span, position;
+
+	properties = ['border-width', 'font-family', 'font-size', 'font-style',
+	  'font-variant', 'font-weight', 'height', 'letter-spacing',
+	  'word-spacing', 'line-height', 'text-decoration', 'width',
+	  'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+	  'margin-top', 'margin-right', 'margin-bottom', 'margin-left'
+	];
+	css = $.extend({
+	  position: 'absolute',
+	  overflow: 'auto',
+	  'white-space': 'pre-wrap',
+	  top: 0,
+	  left: -9999
+	}, getStyles($this, properties));
+
+	textFromHeadToCaret = $this.val().substring(0, $this.caretPosition())
+	$div = $('<div></div>').css(css).text(textFromHeadToCaret);
+	$span = $('<span></span>').text('&nbsp;').appendTo($div);
+	$this.before($div);
+	position = $span.position();
+	position.top += $span.height() - $this.scrollTop();
+	$div.remove();
+	return position;
+  }
+function handleFileSelect(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	var files = evt.dataTransfer.files; // FileList object.
+	if (files.length ==0){
+		return;
+	}
+	// files is a FileList of File objects. List some properties.
+	var output = [];
+	f = files[0]
+	$el = $('#drop_zone');
+	$el.text(f.name + '(' + (f.lastModifiedDate ? f.lastModifiedDate.toString() : '') + ')');
+	var reader = new FileReader();
+    // Closure to capture the file information.
+    reader.onload = function(e) {
+		window.loadedInput = e.target.result;
+    };
+    // Read in the image file as a data URL.
+    reader.readAsText(f);
+}
+
+function handleDragOver(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+	$('#drop_zone').addClass('active');
+}
+function handleDragLeave(evt) {
+	$('#drop_zone').removeClass('active');
+}
+
+// Setup the dnd listeners.
+var dropZone = document.getElementById('drop_zone');
+dropZone.addEventListener('dragover', handleDragOver, false);
+dropZone.addEventListener('dragleave', handleDragLeave, false);
+
+dropZone.addEventListener('drop', handleFileSelect, false);
+
+</script>
+</html>
